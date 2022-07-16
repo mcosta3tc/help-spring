@@ -1,6 +1,7 @@
 package com.ambc.demoServer.user;
 
 import com.ambc.demoServer.emailExceptions.ExistsEmail;
+import com.ambc.demoServer.login.LoginAttemptService;
 import com.ambc.demoServer.user.exceptions.ExistsUserAccountName;
 import com.ambc.demoServer.user.exceptions.NotFoundUser;
 import com.ambc.demoServer.user.roles.Role;
@@ -33,10 +34,13 @@ public class UserServiceImplementation implements UserService, UserDetailsServic
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
+    private final LoginAttemptService loginAttemptService;
+
     @Autowired
-    public UserServiceImplementation(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder) {
+    public UserServiceImplementation(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, LoginAttemptService loginAttemptService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.loginAttemptService = loginAttemptService;
     }
 
     @Override
@@ -46,12 +50,23 @@ public class UserServiceImplementation implements UserService, UserDetailsServic
             LOGGER.error(NO_USER_FOUND_BY_USERNAME + userAccountName);
             throw new UsernameNotFoundException(NO_USER_FOUND_BY_USERNAME + userAccountName);
         } else {
+            //Check if account is not ban before returning the user
+            checkLoginAttempts(user);
             user.setUserLastConnectionToDisplay(user.getUserLastConnection());
             user.setUserLastConnection(new Date());
             userRepository.save(user);
             UserSecuredDetails userSecuredDetails = new UserSecuredDetails(user);
             LOGGER.info(FOUND_USER_BY_USER_ACCOUNT_NAME + userAccountName);
             return userSecuredDetails;
+        }
+    }
+
+    private void checkLoginAttempts(UserEntity user) {
+        //!= ban : remove from cache || == ban :
+        if (user.getIsUserNotBanned()) {
+            user.setIsUserNotBanned(!loginAttemptService.reachMaxAttempts(user.getUserAccountName()));
+        } else {
+            loginAttemptService.removeUserFromCache(user.getUserAccountName());
         }
     }
 
