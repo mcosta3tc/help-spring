@@ -11,7 +11,7 @@ import static java.util.Arrays.stream;
 
 //Provide core User information in a security perspective
 public class UserSecuredDetails implements UserDetails {
-    private UserEntity user;
+    private final UserEntity user;
 
     public UserSecuredDetails(UserEntity user) {
         this.user = user;

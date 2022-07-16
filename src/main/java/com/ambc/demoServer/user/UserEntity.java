@@ -35,7 +35,7 @@ public class UserEntity implements Serializable {
     private Date UserLastConnectionToDisplay;
     private Date userSignUpDate;
     //admin {create, delete, ...}, user {}, ..
-    private String[] userRoles;
+    private String userRole;
     private String[] userPermissions;
     //
     private Boolean isUserConnected;
