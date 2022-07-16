@@ -1,6 +1,8 @@
 package com.ambc.demoServer.user;
 
+import com.ambc.demoServer.email.EmailService;
 import com.ambc.demoServer.emailExceptions.ExistsEmail;
+import com.ambc.demoServer.emailExceptions.NotFoundEmail;
 import com.ambc.demoServer.login.LoginAttemptService;
 import com.ambc.demoServer.user.exceptions.ExistsUserAccountName;
 import com.ambc.demoServer.user.exceptions.NotFoundUser;
@@ -16,13 +18,21 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import javax.mail.MessagingException;
 import javax.transaction.Transactional;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Date;
 import java.util.List;
 
+import static com.ambc.demoServer.user.constants.ProfilePictureFileConstants.*;
 import static com.ambc.demoServer.user.constants.UserImplementationConstants.*;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 @Service
 //manage propagations whenever dealing one or two transactions
@@ -33,13 +43,14 @@ public class UserServiceImplementation implements UserService, UserDetailsServic
     private final Logger LOGGER = LoggerFactory.getLogger(getClass());
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
-
+    private final EmailService emailService;
     private final LoginAttemptService loginAttemptService;
 
     @Autowired
-    public UserServiceImplementation(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, LoginAttemptService loginAttemptService) {
+    public UserServiceImplementation(UserRepository userRepository, BCryptPasswordEncoder passwordEncoder, EmailService emailService, LoginAttemptService loginAttemptService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
         this.loginAttemptService = loginAttemptService;
     }
 
@@ -71,38 +82,97 @@ public class UserServiceImplementation implements UserService, UserDetailsServic
     }
 
     @Override
-    public UserEntity userRegister(String userFirstName, String userLastName, String userAccountName, String userEmail) throws ExistsUserAccountName, ExistsEmail, NotFoundUser {
+    public UserEntity userRegister(String userFirstName, String userLastName, String userAccountName, String userEmail) throws ExistsUserAccountName, ExistsEmail, NotFoundUser, MessagingException {
         checkIfEmailAndEmailIsAvailable(StringUtils.EMPTY, userAccountName, userEmail);
         UserEntity newUser = new UserEntity();
         newUser.setUserIdentifier(generateUserId());
         String password = generatePassword();
-        String encodedPassword = encodePassword(password);
         newUser.setUserFirstName(userFirstName);
         newUser.setUserLastName(userLastName);
         newUser.setUserAccountName(userAccountName);
         newUser.setUserEmail(userEmail);
         newUser.setUserSignUpDate(new Date());
-        newUser.setUserPassword(encodedPassword);
+        newUser.setUserPassword(encodePassword(password));
         newUser.setIsUserConnected(true);
         newUser.setIsUserNotBanned(true);
         newUser.setUserRole(Role.ROLE_USER.name());
         newUser.setUserPermissions(Role.ROLE_USER.getAuthorities());
-        newUser.setUserProfilePictureLink(getTemporaryProfileImgUrl());
+        newUser.setUserProfilePictureLink(getTemporaryProfileImgUrl(userAccountName));
         userRepository.save(newUser);
-        LOGGER.info("New User Pass: " + password);
+        LOGGER.info("Password : " + password);
+        emailService.sendNewPassWord(userFirstName, password, userEmail);
         return newUser;
     }
 
-    private String getTemporaryProfileImgUrl() {
-        return ServletUriComponentsBuilder.fromCurrentContextPath().path(DEFAULT_USER_IMAGE_PROFILE_PATH).toUriString();
+    @Override
+    public UserEntity addNewUserEntity(String userFirstName, String userLastName, String userAccountName, String userEmail, String role, boolean isUserNotBanned, boolean isUserConnected, MultipartFile profileImage) throws ExistsUserAccountName, ExistsEmail, NotFoundUser, IOException {
+        checkIfEmailAndEmailIsAvailable(StringUtils.EMPTY, userAccountName, userEmail);
+        UserEntity newUser = new UserEntity();
+        String password = generatePassword();
+        newUser.setUserIdentifier(generateUserId());
+        newUser.setUserFirstName(userFirstName);
+        newUser.setUserLastName(userLastName);
+        newUser.setUserSignUpDate(new Date());
+        newUser.setUserAccountName(userAccountName);
+        newUser.setUserEmail(userEmail);
+        newUser.setUserPassword(encodePassword(password));
+        newUser.setIsUserConnected(isUserConnected);
+        newUser.setIsUserNotBanned(isUserNotBanned);
+        newUser.setUserRole(getRoleName(role).name());
+        newUser.setUserPermissions(getRoleName(role).getAuthorities());
+        newUser.setUserProfilePictureLink(getTemporaryProfileImgUrl(userAccountName));
+        userRepository.save(newUser);
+        saveProfileImage(newUser, profileImage);
+        return newUser;
     }
 
-    private String encodePassword(String password) {
-        return passwordEncoder.encode(password);
+    @Override
+    public UserEntity updateUserEntity(String currentUserAccountName, String newUserFirstName, String newUserLastName, String newUserAccountName, String newUserEmail, String role, boolean isUserNotBanned, boolean isUserConnected, MultipartFile profileImage) throws ExistsUserAccountName, ExistsEmail, NotFoundUser, IOException {
+        UserEntity currentUser = checkIfEmailAndEmailIsAvailable(currentUserAccountName, newUserAccountName, newUserEmail);
+        currentUser.setUserFirstName(newUserFirstName);
+        currentUser.setUserLastName(newUserLastName);
+        currentUser.setUserAccountName(newUserAccountName);
+        currentUser.setUserEmail(newUserEmail);
+        currentUser.setIsUserConnected(isUserConnected);
+        currentUser.setIsUserNotBanned(isUserNotBanned);
+        currentUser.setUserRole(getRoleName(role).name());
+        currentUser.setUserPermissions(getRoleName(role).getAuthorities());
+        userRepository.save(currentUser);
+        saveProfileImage(currentUser, profileImage);
+        return currentUser;
+    }
+
+
+    @Override
+    public void deleteUserEntity(long id) {
+        userRepository.deleteById(id);
+    }
+
+    @Override
+    public void resetUserPassword(String userEmail) throws MessagingException, NotFoundEmail {
+        UserEntity currentUser = userRepository.findUserByUserEmail(userEmail);
+
+        if (currentUser == null) {
+            throw new NotFoundEmail(NO_USER_FOUND_BY_EMAIL + userEmail);
+        }
+
+        String newPassword = generatePassword();
+        currentUser.setUserPassword(encodePassword(newPassword));
+        userRepository.save(currentUser);
+        emailService.sendNewPassWord(currentUser.getUserFirstName(), newPassword, currentUser.getUserEmail());
+    }
+
+    private String getTemporaryProfileImgUrl(String userAccountName) {
+        return ServletUriComponentsBuilder.fromCurrentContextPath().path(DEFAULT_USER_IMAGE_PATH + userAccountName).toUriString();
     }
 
     private String generatePassword() {
         return RandomStringUtils.randomAlphanumeric(10);
+    }
+
+
+    private String encodePassword(String password) {
+        return passwordEncoder.encode(password);
     }
 
     private String generateUserId() {
@@ -149,5 +219,35 @@ public class UserServiceImplementation implements UserService, UserDetailsServic
     @Override
     public UserEntity findByUserEmail(String userEmail) {
         return userRepository.findUserByUserEmail(userEmail);
+    }
+
+    @Override
+    public UserEntity updateUserProfileImage(String userAccountName, MultipartFile profileImage) throws ExistsUserAccountName, ExistsEmail, NotFoundUser, IOException {
+        UserEntity currentUser = checkIfEmailAndEmailIsAvailable(userAccountName, null, null);
+        saveProfileImage(currentUser, profileImage);
+        return currentUser;
+    }
+
+    private void saveProfileImage(UserEntity newUser, MultipartFile profileImage) throws IOException {
+        if (profileImage != null) {
+            Path userFolder = Paths.get(USER_FOLDER + newUser.getUserAccountName()).toAbsolutePath().normalize();
+            if (!Files.exists(userFolder)) {
+                Files.createDirectories(userFolder);
+                LOGGER.info(DIRECTORY_CREATED + userFolder);
+            }
+            Files.deleteIfExists(Paths.get(userFolder + newUser.getUserAccountName() + DOT + JPG_EXTENSION));
+            Files.copy(profileImage.getInputStream(), userFolder.resolve(newUser.getUserAccountName() + DOT + JPG_EXTENSION), REPLACE_EXISTING);
+            newUser.setUserProfilePictureLink(setProfilePictureUrl(newUser.getUserAccountName()));
+            userRepository.save(newUser);
+            LOGGER.info(FILE_SAVED_IN_FILE_SYSTEM + profileImage.getOriginalFilename());
+        }
+    }
+
+    private String setProfilePictureUrl(String userAccountName) {
+        return ServletUriComponentsBuilder.fromCurrentContextPath().path(USER_IMAGE_PATH + userAccountName + FORWARD_SLASH + userAccountName + DOT + JPG_EXTENSION).toUriString();
+    }
+
+    private Role getRoleName(String role) {
+        return Role.valueOf(role.toUpperCase());
     }
 }

@@ -1,5 +1,5 @@
 jwt:
-  secret: ']]cCt5eU8-SAaOrETCPm]zNP+A2VCSw3h9GD5LTc);de{1b+S21'
+  secret: cCt5eU8-SAaOrETCPm]zNP+A2VCSw3h9GD5LTc);de{1b+S21
 
 server:
   port: 8081

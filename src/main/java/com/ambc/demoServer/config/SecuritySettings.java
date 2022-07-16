@@ -21,6 +21,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configurable
 @EnableWebSecurity
+//Can enable security at method level
 @EnableGlobalMethodSecurity(prePostEnabled = true)
 public class SecuritySettings extends WebSecurityConfigurerAdapter {
     private final JWTAuthFilter jwtAuthFilter;

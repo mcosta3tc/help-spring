@@ -6,6 +6,8 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,6 +26,8 @@ import static java.util.Arrays.stream;
 
 @Component
 public class JWTTokenProvider {
+
+    private final Logger LOGGER = LoggerFactory.getLogger(getClass());
 
     //Secret comming from yml file
     @Value("${jwt.secret}")
@@ -68,8 +72,9 @@ public class JWTTokenProvider {
 
     private String[] getUserClaimsFromToken(String currentToken) {
         JWTVerifier jwtVerifier = getJWTVerifier();
-        return jwtVerifier.verify(tokenSecret).getClaim(Constants.authorities).asArray(String.class);
+        return jwtVerifier.verify(currentToken).getClaim(Constants.authorities).asArray(String.class);
     }
+
 
     private JWTVerifier getJWTVerifier() {
         JWTVerifier jwtVerifier;

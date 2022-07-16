@@ -2,6 +2,7 @@ package com.ambc.demoServer.accessAuthorizations;
 
 import com.ambc.demoServer.tokenSecurity.Constants;
 import com.ambc.demoServer.tokenSecurity.JWTTokenProvider;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -45,7 +46,7 @@ public class JWTAuthFilter extends OncePerRequestFilter {
             response.setStatus(HttpStatus.OK.value());
         } else {
             // Get the header from the request and we pass the header that we want
-            String authHeader = request.getHeader(Constants.authorities);
+            String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
 
             //If the header is null or !start with the token prefix, then we know that is not our auth header => filter and stop the execution of the method
             if (authHeader == null || !authHeader.startsWith(Constants.tokenPrefix)) {
