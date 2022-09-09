@@ -1,5 +1,6 @@
 package com.ambc.demoServer.user;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,6 +23,7 @@ public class UserEntity implements Serializable {
     @GeneratedValue(strategy = GenerationType.AUTO)
     @Column(nullable = false, updatable = false)
     //primary key (sensible data != exposed)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private Long id;
     //userId used to be displayed in the app
     private String userIdentifier;
@@ -29,6 +31,7 @@ public class UserEntity implements Serializable {
     private String userLastName;
     private String userAccountName;
     private String userEmail;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String userPassword;
     private String userProfilePictureLink;
     private Date userLastConnection;

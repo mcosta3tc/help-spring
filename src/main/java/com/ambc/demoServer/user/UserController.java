@@ -80,7 +80,7 @@ public class UserController extends ExceptionsHandler {
                     @RequestParam("isUserConnected") String isUserConnected,
                     @RequestParam("isUserNotBanned") String isUserNotBanned,
                     @RequestParam(value = "userProfilePictureLink", required = false) MultipartFile userProfilePictureLink
-            ) throws ExistsUserAccountName, ExistsEmail, NotFoundUser, IOException {
+            ) throws ExistsUserAccountName, ExistsEmail, NotFoundUser, IOException, MessagingException {
         UserEntity newUser = userService.addNewUserEntity
                 (
                         userFirstName,
@@ -141,11 +141,11 @@ public class UserController extends ExceptionsHandler {
         return customResponse(HttpStatus.OK, EMAIL_SENT + userEmail);
     }
 
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/delete/{userAccountName}")
     @PreAuthorize("hasAnyAuthority('user:delete')")
-    public ResponseEntity<HttpResponseTemplate> deleteUser(@PathVariable("id") long id) {
-        userService.deleteUserEntity(id);
-        return customResponse(HttpStatus.NO_CONTENT, USER_DELETED_SUCCESSFULLY);
+    public ResponseEntity<HttpResponseTemplate> deleteUser(@PathVariable("userAccountName") String userAccountName) throws IOException {
+        userService.deleteUserEntity(userAccountName);
+        return customResponse(HttpStatus.OK, USER_DELETED_SUCCESSFULLY);
     }
 
     @PostMapping("/updateProfileImage")

@@ -51,7 +51,9 @@ public class SecuritySettings extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         //for cors .disable() to remove
-        http.csrf().disable().cors()
+        http.csrf()
+                .disable()
+                .cors()
                 .and()
                 /*
                   No sessions

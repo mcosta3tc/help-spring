@@ -28,13 +28,13 @@ import java.util.Objects;
 
 @RestControllerAdvice
 public class ExceptionsHandler implements ErrorController {
-    public static final String accountLocked = "Your account has been locked";
+    public static final String accountLocked = "Votre compte est bloqué, veuillez contacter un administrateur";
     public static final String methodNotAllowed = "This request method is not allowed on this endpoint. Please send a '%s' request";
-    public static final String serverError = "An error occurred while processing the error";
-    public static final String wrongCredentials = "Username / Password incorrect. Please try again";
+    public static final String serverError = "Une erreur est survenue";
+    public static final String wrongCredentials = "Identifiant ou mot de passe incorrect. Veuillez réessayer";
     public static final String accountDisabled = "Your account has been disabled. If This is an error, please contact administration";
     public static final String fileProcessingError = "Error occurred while processing file";
-    public static final String permissionNotEnough = "You do not have enough permission";
+    public static final String permissionNotEnough = "Vous n'avez pas assez de permissions";
 
     public static final String errorPath = "/error";
 

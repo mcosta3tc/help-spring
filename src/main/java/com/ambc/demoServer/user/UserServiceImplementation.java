@@ -9,6 +9,7 @@ import com.ambc.demoServer.user.exceptions.NotFoundUser;
 import com.ambc.demoServer.user.roles.Role;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.tomcat.util.http.fileupload.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,16 +24,19 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.mail.MessagingException;
 import javax.transaction.Transactional;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
 import static com.ambc.demoServer.user.constants.ProfilePictureFileConstants.*;
 import static com.ambc.demoServer.user.constants.UserImplementationConstants.*;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import static org.springframework.http.MediaType.*;
 
 @Service
 //manage propagations whenever dealing one or two transactions
@@ -105,7 +109,7 @@ public class UserServiceImplementation implements UserService, UserDetailsServic
     }
 
     @Override
-    public UserEntity addNewUserEntity(String userFirstName, String userLastName, String userAccountName, String userEmail, String role, boolean isUserNotBanned, boolean isUserConnected, MultipartFile profileImage) throws ExistsUserAccountName, ExistsEmail, NotFoundUser, IOException {
+    public UserEntity addNewUserEntity(String userFirstName, String userLastName, String userAccountName, String userEmail, String role, boolean isUserNotBanned, boolean isUserConnected, MultipartFile profileImage) throws ExistsUserAccountName, ExistsEmail, NotFoundUser, IOException, MessagingException {
         checkIfEmailAndEmailIsAvailable(StringUtils.EMPTY, userAccountName, userEmail);
         UserEntity newUser = new UserEntity();
         String password = generatePassword();
@@ -123,6 +127,8 @@ public class UserServiceImplementation implements UserService, UserDetailsServic
         newUser.setUserProfilePictureLink(getTemporaryProfileImgUrl(userAccountName));
         userRepository.save(newUser);
         saveProfileImage(newUser, profileImage);
+        emailService.sendNewPassWord(newUser.getUserFirstName(), password, newUser.getUserEmail());
+        LOGGER.info("New user password: " + password);
         return newUser;
     }
 
@@ -144,8 +150,11 @@ public class UserServiceImplementation implements UserService, UserDetailsServic
 
 
     @Override
-    public void deleteUserEntity(long id) {
-        userRepository.deleteById(id);
+    public void deleteUserEntity(String userAccountName) throws IOException {
+        UserEntity user = userRepository.findUserByUserAccountName(userAccountName);
+        Path userFolder = Paths.get(USER_FOLDER + user.getUserAccountName()).toAbsolutePath().normalize();
+        FileUtils.deleteDirectory(new File(userFolder.toString()));
+        userRepository.deleteById(user.getId());
     }
 
     @Override
@@ -230,6 +239,9 @@ public class UserServiceImplementation implements UserService, UserDetailsServic
 
     private void saveProfileImage(UserEntity newUser, MultipartFile profileImage) throws IOException {
         if (profileImage != null) {
+            if (!Arrays.asList(IMAGE_JPEG_VALUE, IMAGE_PNG_VALUE, IMAGE_GIF_VALUE).contains(profileImage.getContentType())) {
+                throw new IOException(profileImage.getOriginalFilename() + " n'est pas au bon format. Seuls les .jpeg, .png et .gif sont accepter");
+            }
             Path userFolder = Paths.get(USER_FOLDER + newUser.getUserAccountName()).toAbsolutePath().normalize();
             if (!Files.exists(userFolder)) {
                 Files.createDirectories(userFolder);
