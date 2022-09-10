@@ -32,8 +32,8 @@ public class ExceptionsHandler implements ErrorController {
     public static final String methodNotAllowed = "This request method is not allowed on this endpoint. Please send a '%s' request";
     public static final String serverError = "Une erreur est survenue";
     public static final String wrongCredentials = "Identifiant ou mot de passe incorrect. Veuillez réessayer";
-    public static final String accountDisabled = "Your account has been disabled. If This is an error, please contact administration";
-    public static final String fileProcessingError = "Error occurred while processing file";
+    public static final String accountDisabled = "Votre compté a été bloqué. veuillez contacter votre RH ou un Manager";
+    public static final String fileProcessingError = "Une erreur est survenu lors du chargement du fichier";
     public static final String permissionNotEnough = "Vous n'avez pas assez de permissions";
 
     public static final String errorPath = "/error";

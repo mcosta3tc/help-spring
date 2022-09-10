@@ -20,9 +20,9 @@ public interface UserService {
 
     UserEntity findByUserEmail(String userEmail);
 
-    UserEntity addNewUserEntity(String userFirstName, String userLastName, String userAccountName, String userEmail, String role, boolean isUserNotBanned, boolean isUserConnected, MultipartFile profileImage) throws ExistsUserAccountName, ExistsEmail, NotFoundUser, IOException, MessagingException;
+    UserEntity addNewUserEntity(String userFirstName, String userLastName, String userAccountName, String userEmail, String role, boolean isUserNotBanned, MultipartFile profileImage) throws ExistsUserAccountName, ExistsEmail, NotFoundUser, IOException, MessagingException;
 
-    UserEntity updateUserEntity(String currentUserAccountName, String newUserFirstName, String newUserLastName, String newUserAccountName, String newUserEmail, String role, boolean isUserNotBanned, boolean isUserConnected, MultipartFile profileImage) throws ExistsUserAccountName, ExistsEmail, NotFoundUser, IOException;
+    UserEntity updateUserEntity(String currentUserAccountName, String newUserFirstName, String newUserLastName, String newUserAccountName, String newUserEmail, String role, boolean isUserNotBanned, MultipartFile profileImage) throws ExistsUserAccountName, ExistsEmail, NotFoundUser, IOException;
 
     void deleteUserEntity(String userAccountName) throws IOException;
 

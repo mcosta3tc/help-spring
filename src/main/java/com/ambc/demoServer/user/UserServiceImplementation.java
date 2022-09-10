@@ -97,7 +97,6 @@ public class UserServiceImplementation implements UserService, UserDetailsServic
         newUser.setUserEmail(userEmail);
         newUser.setUserSignUpDate(new Date());
         newUser.setUserPassword(encodePassword(password));
-        newUser.setIsUserConnected(true);
         newUser.setIsUserNotBanned(true);
         newUser.setUserRole(Role.ROLE_USER.name());
         newUser.setUserPermissions(Role.ROLE_USER.getAuthorities());
@@ -109,7 +108,7 @@ public class UserServiceImplementation implements UserService, UserDetailsServic
     }
 
     @Override
-    public UserEntity addNewUserEntity(String userFirstName, String userLastName, String userAccountName, String userEmail, String role, boolean isUserNotBanned, boolean isUserConnected, MultipartFile profileImage) throws ExistsUserAccountName, ExistsEmail, NotFoundUser, IOException, MessagingException {
+    public UserEntity addNewUserEntity(String userFirstName, String userLastName, String userAccountName, String userEmail, String role, boolean isUserNotBanned, MultipartFile profileImage) throws ExistsUserAccountName, ExistsEmail, NotFoundUser, IOException, MessagingException {
         checkIfEmailAndEmailIsAvailable(StringUtils.EMPTY, userAccountName, userEmail);
         UserEntity newUser = new UserEntity();
         String password = generatePassword();
@@ -120,7 +119,6 @@ public class UserServiceImplementation implements UserService, UserDetailsServic
         newUser.setUserAccountName(userAccountName);
         newUser.setUserEmail(userEmail);
         newUser.setUserPassword(encodePassword(password));
-        newUser.setIsUserConnected(isUserConnected);
         newUser.setIsUserNotBanned(isUserNotBanned);
         newUser.setUserRole(getRoleName(role).name());
         newUser.setUserPermissions(getRoleName(role).getAuthorities());
@@ -133,13 +131,12 @@ public class UserServiceImplementation implements UserService, UserDetailsServic
     }
 
     @Override
-    public UserEntity updateUserEntity(String currentUserAccountName, String newUserFirstName, String newUserLastName, String newUserAccountName, String newUserEmail, String role, boolean isUserNotBanned, boolean isUserConnected, MultipartFile profileImage) throws ExistsUserAccountName, ExistsEmail, NotFoundUser, IOException {
+    public UserEntity updateUserEntity(String currentUserAccountName, String newUserFirstName, String newUserLastName, String newUserAccountName, String newUserEmail, String role, boolean isUserNotBanned, MultipartFile profileImage) throws ExistsUserAccountName, ExistsEmail, NotFoundUser, IOException {
         UserEntity currentUser = checkIfEmailAndEmailIsAvailable(currentUserAccountName, newUserAccountName, newUserEmail);
         currentUser.setUserFirstName(newUserFirstName);
         currentUser.setUserLastName(newUserLastName);
         currentUser.setUserAccountName(newUserAccountName);
         currentUser.setUserEmail(newUserEmail);
-        currentUser.setIsUserConnected(isUserConnected);
         currentUser.setIsUserNotBanned(isUserNotBanned);
         currentUser.setUserRole(getRoleName(role).name());
         currentUser.setUserPermissions(getRoleName(role).getAuthorities());

@@ -50,6 +50,6 @@ public class UserSecuredDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return this.user.getIsUserConnected();
+        return true;
     }
 }

@@ -40,7 +40,5 @@ public class UserEntity implements Serializable {
     //admin {create, delete, ...}, user {}, ..
     private String userRole;
     private String[] userPermissions;
-    //
-    private Boolean isUserConnected;
     private Boolean isUserNotBanned;
 }

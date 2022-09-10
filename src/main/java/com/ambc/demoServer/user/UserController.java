@@ -35,7 +35,7 @@ import static org.springframework.http.MediaType.IMAGE_JPEG_VALUE;
 @RequestMapping(path = {"/", "/user"})
 //When an error occurs => ExceptionsHandler Class
 public class UserController extends ExceptionsHandler {
-    public static final String EMAIL_SENT = "An Email with a new password was sent to : ";
+    public static final String EMAIL_SENT = "Un mail contenant le nouveau mot de passe a été envoyé a : ";
     public static final String USER_DELETED_SUCCESSFULLY = "User deleted successfully";
     private final UserService userService;
     private final AuthenticationManager manager;
@@ -77,7 +77,6 @@ public class UserController extends ExceptionsHandler {
                     @RequestParam("userAccountName") String userAccountName,
                     @RequestParam("userEmail") String userEmail,
                     @RequestParam("userRole") String userRole,
-                    @RequestParam("isUserConnected") String isUserConnected,
                     @RequestParam("isUserNotBanned") String isUserNotBanned,
                     @RequestParam(value = "userProfilePictureLink", required = false) MultipartFile userProfilePictureLink
             ) throws ExistsUserAccountName, ExistsEmail, NotFoundUser, IOException, MessagingException {
@@ -88,7 +87,6 @@ public class UserController extends ExceptionsHandler {
                         userAccountName,
                         userEmail,
                         userRole,
-                        Boolean.parseBoolean(isUserConnected),
                         Boolean.parseBoolean(isUserNotBanned),
                         userProfilePictureLink
                 );
@@ -104,7 +102,6 @@ public class UserController extends ExceptionsHandler {
                     @RequestParam("userAccountName") String userAccountName,
                     @RequestParam("userEmail") String userEmail,
                     @RequestParam("userRole") String userRole,
-                    @RequestParam("isUserConnected") String isUserConnected,
                     @RequestParam("isUserNotBanned") String isUserNotBanned,
                     @RequestParam(value = "userProfilePictureLink", required = false) MultipartFile userProfilePictureLink
             ) throws ExistsUserAccountName, ExistsEmail, NotFoundUser, IOException {
@@ -116,7 +113,6 @@ public class UserController extends ExceptionsHandler {
                         userAccountName,
                         userEmail,
                         userRole,
-                        Boolean.parseBoolean(isUserConnected),
                         Boolean.parseBoolean(isUserNotBanned),
                         userProfilePictureLink
                 );
